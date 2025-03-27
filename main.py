@@ -24,7 +24,7 @@ def load_images(folder):
 
 def preprocess(inputs, targets):
     inputs_train, inputs_test, targets_train, targets_test = train_test_split(
-        inputs.astype(np.float32) / 255.0, targets, test_size=0.10, random_state=0
+        inputs.astype(np.float32) // 255.0, targets, test_size=0.10, random_state=0
     )
     return inputs_train, inputs_test, targets_train, targets_test
 
