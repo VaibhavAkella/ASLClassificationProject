@@ -5,7 +5,7 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay, confusion_matrix
 from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier
 
 
 def load_images(folder):
