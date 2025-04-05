@@ -24,8 +24,10 @@ def load_images(folder):
 
 def preprocess(inputs, targets):
     inputs_train, inputs_test, targets_train, targets_test = train_test_split(
-        inputs.astype(np.float32) // 255.0, targets, test_size=0.10, random_state=0
+        inputs, targets, test_size=0.10, random_state=0,
     )
+    inputs_train = inputs_train / np.float32(255.)
+    inputs_test = inputs_test / np.float32(255.)
     return inputs_train, inputs_test, targets_train, targets_test
 
 
@@ -53,11 +55,11 @@ def main():
     rf_preds = rf.predict(inputs_test)
     rf_acc = accuracy_score(targets_test, rf_preds)
 
-    print(f"MLP Accuracy: {mlp_acc:.2%}")
-    print(f"Random Forest Accuracy: {rf_acc:.2%}")
+    print(f'MLP Accuracy: {mlp_acc:.2%}')
+    print(f'Random Forest Accuracy: {rf_acc:.2%}')
 
-    confusion_mat(targets_test, mlp_preds, labels=['Cat', 'Dog'], title="MLP Classifier")
-    confusion_mat(targets_test, rf_preds, labels=['Cat', 'Dog'], title="Random Forest")
+    confusion_mat(targets_test, mlp_preds, labels=['Cat', 'Dog'], title='MLP Classifier')
+    confusion_mat(targets_test, rf_preds, labels=['Cat', 'Dog'], title='Random Forest')
 
 
 if __name__ == '__main__':
