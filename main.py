@@ -39,10 +39,12 @@ def confusion_mat(target, predictions, labels, title):
     plt.show()
 
 
-def main():
-    inputs, targets = load_images(Path('animals'))
-    inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
+def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inputs_train, inputs_test, targets_train, targets_test):
+    for hv in hyperparam_vals:
+        model = model_cls(**{hyperparam_name: hv})
+        # TODO - use matplotlib to plot performance
 
+def experiment_single_models(inputs_train, inputs_test, targets_train, targets_test):
     mlp = MLPClassifier(hidden_layer_sizes=(25, 50, 10), batch_size=32, learning_rate_init=0.01, max_iter=200, random_state=0)
 
     rf = RandomForestClassifier(n_estimators=100, random_state=0)
@@ -60,6 +62,16 @@ def main():
 
     confusion_mat(targets_test, mlp_preds, labels=['Cat', 'Dog'], title='MLP Classifier')
     confusion_mat(targets_test, rf_preds, labels=['Cat', 'Dog'], title='Random Forest')
+
+
+def main():
+    inputs, targets = load_images(Path('animals'))
+    inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
+    experiment_single_models(inputs_train, inputs_test, targets_train, targets_test)
+    experiment_multiple_models(
+        RandomForestClassifier, 'n_estimators', [100, 200, 300, 400, 500],
+        inputs_train, inputs_test, targets_train, targets_test
+    )
 
 
 if __name__ == '__main__':
