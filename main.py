@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay, confusion_matrix
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
+from tqdm import tqdm
 
 
 def load_images(folder):
@@ -41,18 +42,17 @@ def confusion_mat(target, predictions, labels, title):
 
 def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inputs_train, inputs_test, targets_train, targets_test):
     accuracy = []
-    for hv in hyperparam_vals:
+    for hv in tqdm(hyperparam_vals):
         model = model_cls(**{hyperparam_name: hv}, random_state=0)
         model.fit(inputs_train, targets_train)
         preds = model.predict(inputs_test)
         acc = accuracy_score(targets_test, preds)
         accuracy.append(acc)
-    # TODO - use matplotlib to plot performance
     plt.figure(figsize=(10, 6))
     plt.plot(hyperparam_vals, accuracy)
     plt.xlabel(hyperparam_name)
     plt.ylabel('Accuracy')
-    plt.title(f'Performance vs {hyperparam_name} for {model_cls.__name__}git')
+    plt.title(f'Performance vs {hyperparam_name} for {model_cls.__name__}')
     plt.show()
 
 
