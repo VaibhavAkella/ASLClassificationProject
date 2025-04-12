@@ -40,9 +40,21 @@ def confusion_mat(target, predictions, labels, title):
 
 
 def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inputs_train, inputs_test, targets_train, targets_test):
+    accuracy = []
     for hv in hyperparam_vals:
-        model = model_cls(**{hyperparam_name: hv})
-        # TODO - use matplotlib to plot performance
+        model = model_cls(**{hyperparam_name: hv}, random_state=0)
+        model.fit(inputs_train, targets_train)
+        preds = model.predict(inputs_test)
+        acc = accuracy_score(targets_test, preds)
+        accuracy.append(acc)
+    # TODO - use matplotlib to plot performance
+    plt.figure(figsize=(10, 6))
+    plt.plot(hyperparam_vals, accuracy)
+    plt.xlabel(hyperparam_name)
+    plt.ylabel('Accuracy')
+    plt.title(f'Performance vs {hyperparam_name} for {model_cls.__name__}git')
+    plt.show()
+
 
 def experiment_single_models(inputs_train, inputs_test, targets_train, targets_test):
     mlp = MLPClassifier(hidden_layer_sizes=(25, 50, 10), batch_size=32, learning_rate_init=0.01, max_iter=200, random_state=0)
