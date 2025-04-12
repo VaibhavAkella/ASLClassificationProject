@@ -14,7 +14,7 @@ def load_images(folder):
     targets = []
 
     for label, category in enumerate(['cat', 'dog']):
-        for img_path in sorted((folder / category).iterdir()):
+        for img_path in tqdm(sorted((folder / category).iterdir()), desc=f'Loading {category} images'):
             img = Image.open(img_path).convert('L')
             img = img.resize((64, 64))
             data.append(np.array(img).flatten())
@@ -42,17 +42,23 @@ def confusion_mat(target, predictions, labels, title):
 
 def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inputs_train, inputs_test, targets_train, targets_test):
     accuracy = []
-    for hv in tqdm(hyperparam_vals):
+    for hv in tqdm(hyperparam_vals, desc='Training models'):
         model = model_cls(**{hyperparam_name: hv}, random_state=0)
         model.fit(inputs_train, targets_train)
         preds = model.predict(inputs_test)
         acc = accuracy_score(targets_test, preds)
         accuracy.append(acc)
     plt.figure(figsize=(10, 6))
-    plt.plot(hyperparam_vals, accuracy)
+    if all(isinstance(v, tuple) for v in hyperparam_vals):
+        x_vals = [len(t) for t in hyperparam_vals]
+        title = f'Performance vs {hyperparam_name} for {model_cls.__name__}'
+    else:
+        x_vals = hyperparam_vals
+        title = f'Performance vs {hyperparam_name} for {model_cls.__name__}'
+    plt.plot(x_vals, accuracy)
     plt.xlabel(hyperparam_name)
     plt.ylabel('Accuracy')
-    plt.title(f'Performance vs {hyperparam_name} for {model_cls.__name__}')
+    plt.title()
     plt.show()
 
 
@@ -81,7 +87,11 @@ def main():
     inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
     experiment_single_models(inputs_train, inputs_test, targets_train, targets_test)
     experiment_multiple_models(
-        RandomForestClassifier, 'n_estimators', [100, 200, 300, 400, 500],
+        RandomForestClassifier, 'n_estimators', [i for i in range(100, 501, 100)],
+        inputs_train, inputs_test, targets_train, targets_test
+    )
+    experiment_multiple_models(
+        MLPClassifier, 'hidden_layer_sizes', [(100,) * i for i in range(1, 6)],
         inputs_train, inputs_test, targets_train, targets_test
     )
 
