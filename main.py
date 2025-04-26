@@ -9,12 +9,15 @@ from sklearn.ensemble import RandomForestClassifier
 from tqdm import tqdm
 
 
-def load_images(folder):
+def load_images(folder, num_images_per_category):
     data = []
     targets = []
 
-    for label, category in enumerate(['cat', 'dog']):
-        for img_path in tqdm(sorted((folder / category).iterdir()), desc=f'Loading {category} images'):
+    categories = sorted(p.stem for p in folder.iterdir() if p.is_dir())
+    for label, category in enumerate(tqdm(categories, desc='Loading Images')):
+        img_paths = sorted((folder / category).iterdir())
+        assert num_images_per_category <= len(img_paths)
+        for img_path in img_paths[: num_images_per_category]:
             img = Image.open(img_path).convert('L')
             img = img.resize((64, 64))
             data.append(np.array(img).flatten())
@@ -81,9 +84,11 @@ def experiment_single_models(inputs_train, inputs_test, targets_train, targets_t
     confusion_mat(targets_test, mlp_preds, labels=['Cat', 'Dog'], title='MLP Classifier')
     confusion_mat(targets_test, rf_preds, labels=['Cat', 'Dog'], title='Random Forest')
 
-
 def main():
-    inputs, targets = load_images(Path('animals'))
+    inputs, targets = load_images(
+        Path('Sign_Language_Dataset') / 'asl_alphabet_train' / 'asl_alphabet_train',
+        num_images_per_category=100
+    )
     inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
     experiment_single_models(inputs_train, inputs_test, targets_train, targets_test)
     experiment_multiple_models(
