@@ -34,17 +34,24 @@ def preprocess(inputs, targets):
     return inputs_train, inputs_test, targets_train, targets_test
 
 
-def confusion_mat(target, predictions, labels, title):
+def confusion_mat(target, predictions, labels, title, num_imgs):
     cm = ConfusionMatrixDisplay(confusion_matrix(target, predictions), display_labels=labels)
     fig, ax = plt.subplots()
     cm.plot(ax=ax)
     ax.set_title(title)
-    plt.show()
+    plt.savefig(f'{title.lower().replace(" ", "_")}--num_imgs-{num_imgs}--confusion-mat')
 
 
 def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inputs_train, inputs_test, targets_train, targets_test):
     accuracy = []
-    for hv in tqdm(hyperparam_vals, desc='Training models'):
+    progress_bar = tqdm(
+        hyperparam_vals,
+        desc=(
+            f'Experimenting with {hyperparam_name} '
+            f'for model `{model_cls.__name__}`'
+        )
+    )
+    for hv in progress_bar:
         model = model_cls(**{hyperparam_name: hv}, random_state=0)
         model.fit(inputs_train, targets_train)
         preds = model.predict(inputs_test)
@@ -61,7 +68,11 @@ def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inpu
     plt.xlabel(hyperparam_name)
     plt.ylabel('Accuracy')
     plt.title(title)
-    plt.show()
+    plt.savefig((
+        f'{model_cls.__name__}--num_imgs-'
+        f'{len(inputs_train) + len(inputs_test)}'
+        f'--{hyperparam_name}-vs-accuracy'
+    ).lower())
 
 
 def experiment_single_models(inputs_train, inputs_test, targets_train, targets_test, labels):
@@ -80,14 +91,23 @@ def experiment_single_models(inputs_train, inputs_test, targets_train, targets_t
     print(f'MLP Accuracy: {mlp_acc:.2%}')
     print(f'Random Forest Accuracy: {rf_acc:.2%}')
 
-    confusion_mat(targets_test, mlp_preds, labels=labels, title='MLP Classifier')
-    confusion_mat(targets_test, rf_preds, labels=labels, title='Random Forest')
+    confusion_mat(
+        targets_test, mlp_preds, labels=labels, title=mlp.__class__.__name__,
+        len(inputs_train) + len(inputs_test)
+    )
+    confusion_mat(
+        targets_test, rf_preds, labels=labels, title=rf.__class__.__name__,
+        len(inputs_train) + len(inputs_test)
+    )
 
 
 def main():
     for num_images in [50, 100, 200]:
         print(f"\n=== Running experiments with {num_images} images per category ===\n")
         inputs, targets, labels = load_images(
+            # We are only grabbing data from the train set and splitting it
+            # into train and test. We are ignoring the `asl_alphabet_test`
+            # folder
             Path('Sign_Language_Dataset') / 'asl_alphabet_train' / 'asl_alphabet_train',
             num_images_per_category=num_images
         )
