@@ -12,7 +12,6 @@ from tqdm import tqdm
 def load_images(folder, num_images_per_category):
     data = []
     targets = []
-
     categories = sorted(p.stem for p in folder.iterdir() if p.is_dir())
     for label, category in enumerate(tqdm(categories, desc='Loading Images')):
         img_paths = sorted((folder / category).iterdir())
@@ -23,7 +22,7 @@ def load_images(folder, num_images_per_category):
             data.append(np.array(img).flatten())
             targets.append(label)
 
-    return np.array(data), np.array(targets)
+    return np.array(data), np.array(targets), categories
 
 
 def preprocess(inputs, targets):
@@ -61,11 +60,11 @@ def experiment_multiple_models(model_cls, hyperparam_name, hyperparam_vals, inpu
     plt.plot(x_vals, accuracy)
     plt.xlabel(hyperparam_name)
     plt.ylabel('Accuracy')
-    plt.title()
+    plt.title(title)
     plt.show()
 
 
-def experiment_single_models(inputs_train, inputs_test, targets_train, targets_test):
+def experiment_single_models(inputs_train, inputs_test, targets_train, targets_test, labels):
     mlp = MLPClassifier(hidden_layer_sizes=(25, 50, 10), batch_size=32, learning_rate_init=0.01, max_iter=200, random_state=0)
 
     rf = RandomForestClassifier(n_estimators=100, random_state=0)
@@ -81,24 +80,40 @@ def experiment_single_models(inputs_train, inputs_test, targets_train, targets_t
     print(f'MLP Accuracy: {mlp_acc:.2%}')
     print(f'Random Forest Accuracy: {rf_acc:.2%}')
 
-    confusion_mat(targets_test, mlp_preds, labels=['Cat', 'Dog'], title='MLP Classifier')
-    confusion_mat(targets_test, rf_preds, labels=['Cat', 'Dog'], title='Random Forest')
+    confusion_mat(targets_test, mlp_preds, labels=labels, title='MLP Classifier')
+    confusion_mat(targets_test, rf_preds, labels=labels, title='Random Forest')
+
 
 def main():
-    inputs, targets = load_images(
-        Path('Sign_Language_Dataset') / 'asl_alphabet_train' / 'asl_alphabet_train',
-        num_images_per_category=100
-    )
-    inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
-    experiment_single_models(inputs_train, inputs_test, targets_train, targets_test)
-    experiment_multiple_models(
-        RandomForestClassifier, 'n_estimators', [i for i in range(100, 501, 100)],
-        inputs_train, inputs_test, targets_train, targets_test
-    )
-    experiment_multiple_models(
-        MLPClassifier, 'hidden_layer_sizes', [(100,) * i for i in range(1, 6)],
-        inputs_train, inputs_test, targets_train, targets_test
-    )
+    for num_images in [50, 100, 200]:
+        print(f"\n=== Running experiments with {num_images} images per category ===\n")
+        inputs, targets, labels = load_images(
+            Path('Sign_Language_Dataset') / 'asl_alphabet_train' / 'asl_alphabet_train',
+            num_images_per_category=num_images
+        )
+        inputs_train, inputs_test, targets_train, targets_test = preprocess(inputs, targets)
+        experiment_single_models(inputs_train, inputs_test, targets_train, targets_test, labels)
+        experiment_multiple_models(
+            RandomForestClassifier, 'n_estimators', [50, 100, 200, 300, 400],
+            inputs_train, inputs_test, targets_train, targets_test
+        )
+        experiment_multiple_models(
+            MLPClassifier, 'hidden_layer_sizes', [(50,), (100,), (50, 50), (100, 100), (100, 50, 25)],
+            inputs_train, inputs_test, targets_train, targets_test
+        )
+        experiment_multiple_models(
+            MLPClassifier, 'batch_size', [16, 32, 64, 128],
+            inputs_train, inputs_test, targets_train, targets_test
+        )
+
+        experiment_multiple_models(
+            MLPClassifier, 'learning_rate_init', [0.0001, 0.001, 0.01, 0.1],
+            inputs_train, inputs_test, targets_train, targets_test
+        )
+        experiment_multiple_models(
+            MLPClassifier, 'max_iter', [50, 100, 200, 300],
+            inputs_train, inputs_test, targets_train, targets_test
+        )
 
 
 if __name__ == '__main__':
