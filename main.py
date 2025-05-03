@@ -93,11 +93,11 @@ def experiment_single_models(inputs_train, inputs_test, targets_train, targets_t
 
     confusion_mat(
         targets_test, mlp_preds, labels=labels, title=mlp.__class__.__name__,
-        len(inputs_train) + len(inputs_test)
+        num_imgs=len(inputs_train) + len(inputs_test)
     )
     confusion_mat(
         targets_test, rf_preds, labels=labels, title=rf.__class__.__name__,
-        len(inputs_train) + len(inputs_test)
+        num_imgs=len(inputs_train) + len(inputs_test)
     )
 
 
